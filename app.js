@@ -12,51 +12,18 @@ function primitiveSummary(primitives){const counts={};for(const p of primitives)
 function draw(a,c,w,h,invert=false){c.width=w;c.height=h;const x=c.getContext('2d'),im=x.createImageData(w,h);for(let i=0;i<a.length;i++){let v=invert?1-a[i]:a[i],p=Math.round(clamp(v)*255),j=i*4;im.data[j]=im.data[j+1]=im.data[j+2]=p;im.data[j+3]=255}x.putImageData(im,0,0)}function copy(a,b){b.width=a.width;b.height=a.height;b.getContext('2d').drawImage(a,0,0)}
 function card(parent,title,arr,w,h){let a=document.createElement('article'),h2=document.createElement('h2'),c=document.createElement('canvas');h2.textContent=title;a.append(h2,c);parent.append(a);draw(arr,c,w,h)}
 function render(){const{src,w,h,r}=data;copy(src,$('source'));draw(r.contours,$('contours'),w,h);draw(r.FG,$('fg'),w,h);draw(r.LOP,$('lop'),w,h);draw(r.FS,$('fs'),w,h,true);drawPrimitives(src,$('primitiveOverlay'),w,h,r.primitives,true);drawPrimitives(src,$('primitiveCanvas'),w,h,r.primitives,false);$('primitiveSummary').innerHTML=primitiveSummary(r.primitives);$('geometry').innerHTML='';$('light').innerHTML='';for(const op of OPS){card($('geometry'),`G_${op}`,r.G[op],w,h);card($('light'),`L_${op}`,r.LK[op],w,h)}$('results').hidden=false}
-async function run(src){$('status').textContent='Geometrische reductie berekenenâ¦';const l=await load(src);data={src:l.c,w:l.w,h:l.h,r:analyze(l.L,l.w,l.h),L:l.L};render();$('status').textContent='Gereed: puur zichtbare geometrie, zonder objectherkenning.'}
-// Geintegreerde foto-upload en analyseknop. Ondersteunt zowel de bestaande IDs
-// #file / #run als de nieuwere IDs #photoInput / #analyseButton.
-const fileControl = $('photoInput') || $('file');
-const analyseControl = $('analyseButton') || $('run');
-
-if (fileControl && analyseControl) {
-  analyseControl.disabled = true;
-
-  fileControl.onchange = e => {
-    selected = e.target.files?.[0] || null;
-    analyseControl.disabled = !selected;
-    const status = $('status');
-    if (status) {
-      status.textContent = selected
-        ? `Foto gereed voor analyse: ${selected.name}`
-        : 'Kies eerst een foto.';
-    }
-  };
-
-  analyseControl.onclick = async () => {
-    if (!selected) {
-      const status = $('status');
-      if (status) status.textContent = 'Upload eerst een foto.';
-      return;
-    }
-
-    analyseControl.disabled = true;
-    const oldLabel = analyseControl.textContent;
-    analyseControl.textContent = 'Analyse bezig...';
-
-    try {
-      await run(selected);
-      analyseControl.textContent = 'Analyse voltooid';
-    } catch (error) {
-      console.error(error);
-      const status = $('status');
-      if (status) status.textContent = `Analyse mislukt: ${error.message}`;
-      analyseControl.textContent = 'Probeer opnieuw';
-    } finally {
-      analyseControl.disabled = false;
-      window.setTimeout(() => {
-        analyseControl.textContent = oldLabel || 'Analyseer foto';
-      }, 1800);
-    }
-  };
-}
-$('example').onclick=()=>run('./voorbeeld.jpg');$('exampleLarge').onclick=()=>run('./voorbeeld.jpg');$('detail').oninput=e=>{detail=+e.target.value;if(data){data.r=analyze(data.L,data.w,data.h);render()}};$('threshold').oninput=e=>{threshold=+e.target.value;$('thresholdValue').textContent=threshold.toFixed(2);if(data){data.r=analyze(data.L,data.w,data.h);render()}};document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(x=>x.hidden=true);$(b.dataset.view).hidden=false});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+async function run(src){$('status').textContent='Stap 1/4: afbeelding laden en lineaire luminantie berekenen…';const l=await load(src);data={src:l.c,w:l.w,h:l.h,r:analyze(l.L,l.w,l.h),L:l.L};render();$('status').textContent='Gereed: contouren, operatorlagen, L_operator, F_S en primitieven zijn lokaal berekend.'}
+$('file').onchange=e=>{
+  selected=e.target.files?.[0]||null;
+  $('run').disabled=!selected;
+  $('status').textContent=selected?`Foto gereed: ${selected.name}. Tik op Analyseer foto.`:'Kies eerst een foto.';
+};
+$('run').onclick=async()=>{
+  if(!selected){$('status').textContent='Kies eerst een foto.';return;}
+  const label=$('run').textContent;
+  $('run').disabled=true;
+  $('run').textContent='Analyse bezig...';
+  try{await run(selected);$('run').textContent='Analyse voltooid';}
+  catch(err){console.error(err);$('status').textContent=`Analyse mislukt: ${err.message}`;$('run').textContent='Probeer opnieuw';}
+  finally{setTimeout(()=>{$('run').textContent=label;$('run').disabled=!selected},1600)}
+};$('detail').oninput=e=>{detail=+e.target.value;if(data){data.r=analyze(data.L,data.w,data.h);render()}};$('threshold').oninput=e=>{threshold=+e.target.value;$('thresholdValue').textContent=threshold.toFixed(2);if(data){data.r=analyze(data.L,data.w,data.h);render()}};document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(x=>x.hidden=true);$(b.dataset.view).hidden=false});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});

@@ -1,1 +1,1 @@
-{"name":"EC-DynaMech v0.1","short_name":"DynaMech","start_url":"./index.html","display":"standalone","background_color":"#050b12","theme_color":"#07111d","description":"DG-veldsandbox voor operatorvelden, afgeleide lichtintensiteit en emergente veldvormen."}
+{"name":"EC-DynaMech v0.2","short_name":"DynaMech","start_url":"./index.html?v=0.2.1","scope":"./","display":"standalone","background_color":"#090d12","theme_color":"#10161d","description":"Lokale geometrische fotoanalyse met operator- en lichtlagen."}

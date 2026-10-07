@@ -1,86 +1,55 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111d">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>EC-DynaMech v0.1</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10161d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="./style.css">
+<title>EC-DynaMech v0.2</title>
 </head>
 <body>
-<header>
-  <div><b>EC-DynaMech</b><span>v0.1</span></div>
-  <p>Topologie → operatorvelden → DG-lichtintensiteit → emergente veldvorm</p>
-</header>
+<header><h1>EC-DynaMech <span>v0.2</span></h1><p>Foto naar geometrische reductie, operatorvelden, DG-lichtintensiteit en veldvorm</p></header>
 <main>
-  <section class="card intro">
-    <div><h1>DG-veldsandbox</h1><p>De app gebruikt geen cameralicht. L<sub>DG</sub> is een genormaliseerde, afgeleide organisatie-intensiteit uit de operatorvelden. De uitkomsten zijn computationeel en nog niet onafhankelijk gevalideerd.</p></div>
-    <div class="actions"><button id="reset">Herstel R9</button><button id="export">Exporteer JSON</button></div>
-  </section>
+<section class="card controls">
+<label class="pick">Kies foto<input id="file" type="file" accept="image/*"></label>
+<button id="run" disabled>Analyseer foto</button>
+<label>Detail <input id="detail" type="range" min="0.5" max="2" step="0.1" value="1"></label>
+<label>F_S-drempel <input id="threshold" type="range" min="0.35" max="0.8" step="0.05" value="0.6"><output id="thresholdValue">0.60</output></label>
+<p id="status">Kies een foto. De verwerking blijft lokaal op dit apparaat.</p>
+</section>
 
-  <nav class="tabs" aria-label="Weergaven">
-    <button class="active" data-tab="workspace">Werkruimte</button>
-    <button data-tab="fields">Operatorvelden</button>
-    <button data-tab="method">Methode</button>
-  </nav>
+<section id="results" hidden>
+<nav class="tabs">
+<button data-view="comparison" class="active">Vergelijking</button>
+<button data-view="primitives">Primitieven</button>
+<button data-view="geometry">Operatoren G_k</button>
+<button data-view="light">Licht L_k</button>
+</nav>
 
-  <section id="workspace" class="tabview">
-    <div class="layout">
-      <aside class="card controls">
-        <h2>Operatorparameters</h2>
-        <p class="small">Simulatie-invoer. De waarden sturen de ruimtelijke operatorfuncties, niet een fysieke lichtmeting.</p>
-        <div id="sliders"></div>
-        <hr>
-        <label>Resolutie <select id="resolution"><option value="96">96</option><option value="128" selected>128</option><option value="160">160</option></select></label>
-        <label>Veldspreiding <input id="spread" type="range" min="0.12" max="0.42" step="0.01" value="0.24"><output id="spreadOut">0.24</output></label>
-        <label>Emergentiedrempel <input id="threshold" type="range" min="0.35" max="0.80" step="0.01" value="0.58"><output id="thresholdOut">0.58</output></label>
-        <button id="randomize">Nieuwe toestand</button>
-      </aside>
+<div id="comparison" class="view grid">
+<article><h2>Bron</h2><canvas id="source"></canvas></article>
+<article><h2>Contouren</h2><canvas id="contours"></canvas></article>
+<article><h2>F_G raster</h2><canvas id="fg"></canvas></article>
+<article><h2>F_G primitieven</h2><canvas id="primitiveOverlay"></canvas></article>
+<article class="dark"><h2>L_operator</h2><canvas id="lop"></canvas></article>
+<article class="white"><h2>F_S</h2><canvas id="fs"></canvas></article>
+</div>
 
-      <section class="views">
-        <article class="card"><div class="title"><h2>1. R9-topologie</h2><span>bronstructuur</span></div><canvas id="network" width="720" height="720"></canvas></article>
-        <article class="card"><div class="title"><h2>2. DG-lichtintensiteit</h2><span>L<sub>DG</sub>(x,y)</span></div><canvas id="light" width="720" height="720"></canvas></article>
-        <article class="card"><div class="title"><h2>3. Emergente veldvorm</h2><span>isobanden + knooppunten</span></div><canvas id="emergence" width="720" height="720"></canvas></article>
-      </section>
+<div id="primitives" class="view" hidden>
+<section class="primitive-layout">
+<article><h2>Operatorische geometrie als primitieven</h2><canvas id="primitiveCanvas"></canvas></article>
+<article class="card primitive-list"><h2>Gedetecteerde primitieven</h2><div id="primitiveSummary"></div><p class="note">Alleen rasterposities, randsterkte, assteun, sluiting en verbonden componenten. Geen object- of symboolklasse.</p></article>
+</section>
+</div>
+<div id="geometry" class="view operator-grid" hidden></div>
+<div id="light" class="view operator-grid" hidden></div>
 
-      <aside class="card metrics">
-        <h2>Afgeleide toestand</h2>
-        <div id="bars"></div>
-        <hr>
-        <dl id="metrics"></dl>
-        <p class="small">Ontbrekend ≠ 0. ψ<sub>L</sub> is hier een kandidaat uit lokale maxima van L<sub>DG</sub>. ◇ en Ψ zijn prototype-indicatoren, geen validatiestatus.</p>
-      </aside>
-    </div>
-  </section>
-
-  <section id="fields" class="tabview" hidden>
-    <div id="fieldGrid" class="field-grid"></div>
-  </section>
-
-  <section id="method" class="tabview" hidden>
-    <article class="card prose">
-      <h2>Rekenketen v0.1</h2>
-      <ol>
-        <li>De canonieke R9-punten worden genormaliseerd naar een vierkant domein.</li>
-        <li>Elke operator bouwt een afzonderlijk veld uit knooppunten en verbindingen.</li>
-        <li>De vijf velden worden per pixel genormaliseerd en gewogen samengesteld tot L<sub>DG</sub>.</li>
-        <li>Lokale maxima boven de drempel worden als ψ<sub>L</sub>-kandidaten gemarkeerd.</li>
-        <li>Isobanden tonen de emergente veldvorm. De vorm is dus afgeleid, niet vooraf getekend.</li>
-      </ol>
-      <h3>Prototypeformule</h3>
-      <pre>L_DG = N(ρFρ + μFμ + ιFι + CFC + ΠFΠ)
-
-◇_proto = 0.5 × sluitingsdekking + 0.5 × centrale continuïteit
-Ψ_proto = ◇_proto × gemiddelde lokale veldsterkte
-Ω_proto = [Ψ_proto, ◇_proto, ρ, μ, ι, C, Π, Q]</pre>
-      <p>Deze formules zijn expliciete v0.1-ontwerpkeuzes en moeten later per operator empirisch worden geoperationaliseerd en gevalideerd.</p>
-    </article>
-  </section>
+<section class="card"><h2>Legenda en status</h2><p><b>Gρ</b> ritme · <b>Gμ</b> modulatie · <b>Gι⁺</b> positieve interferentie · <b>Gι⁻</b> negatieve interferentie · <b>GC</b> coherentie · <b>GD</b> richting · <b>Gcl</b> sluiting · <b>GB</b> dragende structuur</p><p class="note">De uitvoer is een computationele geometrische proxy en is niet onafhankelijk gevalideerd. L_operator is afgeleide organisatie-intensiteit, geen fysieke lichtfrequentie. Ontbrekend is niet gelijk aan nul.</p></section>
+</section>
 </main>
-<footer>EC-DynaMech v0.1 · lokale browserberekening · geen gegevensupload</footer>
-<script src="app.js"></script>
+<script src="./app.js?v=0.2.1"></script>
 </body>
 </html>
